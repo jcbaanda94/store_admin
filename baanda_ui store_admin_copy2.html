@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Baanda UI/UX Demo (Collapsible Sidebar + Main Navbar Buttons)</title>
+  <style>
+    /* ----------------------------------------
+       1) RESET / BASE
+    ---------------------------------------- */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    body {
+      background-color: #f7f9fa;
+      color: #333;
+      overflow-x: hidden;
+      line-height: 1.4;
+    }
+    a {
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+
+    /* ----------------------------------------
+       2) COLOR VARIABLES
+    ---------------------------------------- */
+    :root {
+      --color-primary: #236B63;
+      --color-primary-hover: #1e5a54;
+      --color-bg: #fff;
+      --color-border: #eee;
+      --transition: 0.2s;
+    }
+
+    /* ----------------------------------------
+       3) BASIC BUTTONS
+    ---------------------------------------- */
+    .btn {
+      background-color: var(--color-primary);
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color var(--transition), box-shadow var(--transition);
+      font-size: 0.95rem;
+    }
+    .btn:hover {
+      background-color: var(--color-primary-hover);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .btn-secondary {
+      background-color: #ddd;
+      color: #333;
+    }
+    .btn-secondary:hover {
+      background-color: #ccc;
+      box-shadow: none;
+    }
+    .btn-icon {
+      padding: 0.3rem 0.5rem;
+      border-radius: 3px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ----------------------------------------
+       4) LAYOUT STRUCTURE
+    ---------------------------------------- */
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+    .sidebar {
+      background-color: var(--color-primary);
+      width: 220px;
+      transition: width var(--transition);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar.collapsed {
+      width: 60px;
+    }
+    .sidebar-header {
+      color: #fff;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: bold;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      transition: opacity var(--transition);
+    }
+    .sidebar-header.collapsed {
+      opacity: 0;
+    }
+    .collapse-btn {
+      background-color: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.5rem 1rem;
+      text-align: left;
+      transition: background-color var(--transition);
+    }
+    .collapse-btn:hover {
+      background-color: rgba(0,0,0,0.1);
+    }
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding: 0.5rem 0.5rem;
+      flex: 1;
+    }
+    .sidebar-nav a {
+      color: #fff;
+      padding: 0.6rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      transition: background-color var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .sidebar-nav a:hover {
+      background-color: rgba(255,255,255,0.15);
+    }
+    .sidebar-nav a.active {
+      background-color: rgba(255,255,255,0.3);
+    }
+    .icon {
+      font-size: 1.2rem;
+      width: 24px;
+      text-align: center;
+    }
+    .nav-text {
+      transition: opacity var(--transition);
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    header.topbar {
+      background-color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+    }
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .logo {
+      width: 40px;
+      height: 40px;
+      background: url('https://via.placeholder.com/40') center/cover no-repeat;
+      border-radius: 4px;
+    }
+    .community-name {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--color-primary);
+    }
+
+    .content-wrapper {
+      padding: 1rem;
+      background-color: #fff;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* ----------------------------------------
+       5) TABLES & SUBNAV
+    ---------------------------------------- */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+      background-color: #fff;
+    }
+    .table th, .table td {
+      border: 1px solid #ebebeb;
+      padding: 0.75rem;
+      text-align: left;
+      vertical-align: middle;
+    }
+    .table th {
+      background-color: #f2f2f2;
+      font-weight: 600;
+      color: #333;
+    }
+    .table tbody tr:hover {
+      background-color: #f9f9f9;
+    }
+    .subnav,
+    .store-subnav-logic,
+    .store-subnav-inventory {
+      background-color: #f5f5f5;
+      display: flex;
+      gap: 1rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    .subnav a,
+    .store-subnav-logic a,
+    .store-subnav-inventory a {
+      color: var(--color-primary);
+      font-weight: 500;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      transition: background-color var(--transition);
+    }
+    .subnav a:hover,
+    .store-subnav-logic a:hover,
+    .store-subnav-inventory a:hover {
+      background-color: #eee;
+    }
+    .subnav a.active,
+    .store-subnav-logic a.active,
+    .store-subnav-inventory a.active {
+      background-color: var(--color-primary);
+      color: #fff;
+    }
+    .info-badge {
+      background-color: #eee;
+      border-radius: 4px;
+      padding: 0.25rem 0.75rem;
+    }
+    .order-ops {
+      text-align: right;
+    }
+    .pagination {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    /* ----------------------------------------
+       6) EXTRAS
+    ---------------------------------------- */
+    .quick-links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+      justify-content: center;
+    }
+    .quick-link-card {
+      background-color: var(--color-primary);
+      color: #fff;
+      border-radius: 4px;
+      padding: 1rem;
+      text-align: center;
+      width: 170px;
+      cursor: pointer;
+      transition: background-color var(--transition), box-shadow var(--transition);
+    }
+    .quick-link-card:hover {
+      background-color: var(--color-primary-hover);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+    .item-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .item-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px;
+      align-items: center;
+      background-color: #fafafa;
+      border-radius: 4px;
+      padding: 0.5rem;
+      border: 1px solid #eee;
+    }
+    .item-img {
+      width: 60px;
+      height: 60px;
+      border-radius: 4px;
+      background-color: #ccc;
+      background-position: center;
+      background-size: cover;
+      margin-right: 0.75rem;
+    }
+    .footer-note {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: #555;
+    }
+    .campaign-panel {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    .campaign-field {
+      margin-bottom: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .campaign-field label {
+      width: 150px;
+      font-weight: 500;
+    }
+    .news-container {
+      display: flex;
+      gap: 1rem;
+    }
+    .news-aside {
+      flex: 1; 
+      background-color: #fafafa; 
+      border: 1px solid #ddd; 
+      border-radius: 4px; 
+      padding: 1rem;
+    }
+    .post-list-item {
+      background-color: #e0c084;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background-color var(--transition);
+    }
+    .post-list-item:hover {
+      background-color: #d1b278;
+    }
+    .bmail-table {
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-bottom: 1rem;
+    }
+    .bmail-table th, .bmail-table td {
+      border: 1px solid #ebebeb; 
+      padding: 0.75rem; 
+      text-align: left;
+    }
+    .bmail-table th {
+      background-color: #f2f2f2; 
+      font-weight: 600;
+      color: #333;
+    }
+    .admin-task-list {
+      display: flex; 
+      flex-direction: column; 
+      gap: 0.5rem; 
+      max-height: 400px; 
+      overflow-y: auto; 
+      border: 1px solid #ccc; 
+      border-radius: 4px; 
+      padding: 0.75rem; 
+      background-color: #fafafa;
+    }
+    .admin-task-list div {
+      background-color: #217272; 
+      color: #fff;
+      padding: 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: background-color var(--transition), box-shadow var(--transition);
+    }
+    .admin-task-list div:hover {
+      background-color: #1b605e;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .filter-panel {
+      background-color: #fafafa;
+      padding: 1rem;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      margin-bottom: 1rem;
+    }
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .filter-group {
+      display: flex; 
+      align-items: center; 
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- COLLAPSIBLE SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+      <button class="collapse-btn" onclick="toggleSidebar()">☰</button>
+      <div id="sidebarHeader" class="sidebar-header">Main Menu</div>
+      <nav class="sidebar-nav" id="sidebarNav">
+        <a onclick="showSection('landingSection')" id="side-landing">
+          <span class="icon">🏠</span><span class="nav-text">Landing</span>
+        </a>
+        <a onclick="showSection('catalogManageSection','catalog')" id="side-catalog">
+          <span class="icon">📦</span><span class="nav-text">Catalog</span>
+        </a>
+        <a onclick="showSection('storeLogicToShipSection','store')" id="side-store">
+          <span class="icon">🏬</span><span class="nav-text">Store</span>
+        </a>
+        <a onclick="showSection('connectNewsSection','connect')" id="side-connect">
+          <span class="icon">💬</span><span class="nav-text">Connect</span>
+        </a>
+        <a onclick="showSection('operateReportsSection','operate')" id="side-operate">
+          <span class="icon">⚙️</span><span class="nav-text">Operate</span>
+        </a>
+        <a onclick="showSection('adminSection')" id="side-admin">
+          <span class="icon">🔑</span><span class="nav-text">Admin</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <!-- TOP BAR WITH EXTRA NAV BUTTONS -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="logo"></div>
+          <div class="community-name">Your Community Name</div>
+        </div>
+        <div class="topbar-right">
+          <span>Jon Carlo Vargas (jc@baanda.com)</span>
+          <button class="btn-secondary" onclick="alert('Account')">Account</button>
+          <button class="btn-secondary" onclick="alert('Lobby')">Lobby</button>
+          <button class="btn-secondary" onclick="alert('ReadMe')">ReadMe</button>
+          <button class="btn" onclick="alert('Logout')">Logout</button>
+          <button class="btn-secondary" onclick="alert('Adm')">Adm</button>
+        </div>
+      </header>
+
+      <div class="content-wrapper">
+
+        <!-- 1) LANDING SECTION -->
+        <section id="landingSection">
+          <h1>Welcome to Your Community!</h1>
+          <p>This is your landing page. From here, you can explore the catalog, manage your store, connect with members, and more.</p>
+          <div class="quick-links">
+            <div class="quick-link-card" onclick="showSection('catalogManageSection','catalog')">Go to Catalog</div>
+            <div class="quick-link-card" onclick="showSection('storeLogicToShipSection','store')">Visit Store</div>
+            <div class="quick-link-card" onclick="showSection('connectNewsSection','connect')">Connect</div>
+            <div class="quick-link-card" onclick="showSection('operateReportsSection','operate')">Operate</div>
+          </div>
+        </section>
+
+        <!-- 2) CATALOG: Manage, Sell, CartMgmt -->
+        <section id="catalogManageSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('catalogManageSection','catalog')" class="active">Manage</a>
+            <a onclick="showSection('catalogSellSection','catalog')">Sell</a>
+            <a onclick="showSection('catalogCartMgmtSection','catalog')">CartMgmt</a>
+          </div>
+          <h1>Catalog Management</h1>
+          <div class="filter-panel">
+            <h2>Filter Catalog Items</h2>
+            <div class="filter-row">
+              <div class="filter-group">
+                <label>Type:</label>
+                <select id="merchTypeSelect">
+                  <option value="goods">Goods</option>
+                  <option value="service">Service</option>
+                </select>
+              </div>
+              <div class="filter-group">
+                <label><input type="checkbox" id="publishedCheck" checked> Published Only</label>
+              </div>
+              <div class="filter-group">
+                <label>Select by:</label>
+                <label><input type="radio" name="selectBy" value="all" checked> All</label>
+                <label><input type="radio" name="selectBy" value="name"> Name</label>
+                <label><input type="radio" name="selectBy" value="category"> Category</label>
+              </div>
+            </div>
+            <div class="filter-row" id="searchRow" style="display:none;">
+              <div class="filter-group">
+                <label>Search:</label>
+                <input type="text" id="searchInput" placeholder="Type name or category...">
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <button class="btn" id="fetchBtn">Fetch</button>
+            </div>
+          </div>
+          <table class="table" id="resultsTable" style="display:none;">
+            <thead>
+              <tr><th>Name</th><th>Category</th><th>Type</th><th>Status</th></tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </section>
+
+        <section id="catalogSellSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('catalogManageSection','catalog')">Manage</a>
+            <a onclick="showSection('catalogSellSection','catalog')" class="active">Sell</a>
+            <a onclick="showSection('catalogCartMgmtSection','catalog')">CartMgmt</a>
+          </div>
+          <h2>Catalog → Sell</h2>
+          <p>Hello Jon Carlo Vargas (jc@baanda.com)</p>
+          <div class="filter-row">
+            <div class="info-badge">Total Items: 5</div>
+            <div class="info-badge">3 Services</div>
+            <div class="info-badge">2 Goods</div>
+            <div class="info-badge">0 DA</div>
+          </div>
+          <div class="item-list" id="itemList"></div>
+          <div class="footer-note" id="footerNote"></div>
+        </section>
+
+        <section id="catalogCartMgmtSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('catalogManageSection','catalog')">Manage</a>
+            <a onclick="showSection('catalogSellSection','catalog')">Sell</a>
+            <a onclick="showSection('catalogCartMgmtSection','catalog')" class="active">CartMgmt</a>
+          </div>
+          <h2>Cart Management</h2>
+          <p>Below is a list of abandoned or pending carts...</p>
+          <table class="table" id="cartTable">
+            <thead>
+              <tr><th>Ops</th><th>Type</th><th>Cart Of</th><th>Last Touched</th></tr>
+            </thead>
+            <tbody id="cartBody"></tbody>
+          </table>
+        </section>
+
+        <!-- 3) STORE: Logic + Inventory -->
+        <section id="storeLogicToShipSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('storeLogicToShipSection','store')" class="active">Logic</a>
+            <a onclick="showSection('storeInventorySection','store')">Inventory</a>
+            <a onclick="alert('Store → Finance not yet implemented.')">Finance</a>
+          </div>
+          <div class="store-subnav-logic">
+            <a onclick="showSection('storeLogicToShipSection','store')" class="active">To Ship</a>
+            <a onclick="showSection('storeLogicPickupSection','store')">Pickup</a>
+            <a onclick="showSection('storeLogicReturnsSection','store')">Returns</a>
+          </div>
+          <h2>Shipping Management (To Ship)</h2>
+          <div class="filter-row">
+            <div class="info-badge">13 to ship</div>
+            <div class="info-badge">Credits ATL*: $0.00</div>
+            <button class="btn" onclick="alert('Filter (implement logic)')">Filter</button>
+            <button class="btn" onclick="alert('Manual (implement logic)')">Manual</button>
+          </div>
+          <table class="table" id="shipTable">
+            <thead>
+              <tr><th>Customer Name / Email / (InvoiceID)</th><th>Date</th><th>Ops</th></tr>
+            </thead>
+            <tbody id="shipBody"></tbody>
+          </table>
+          <div class="pagination" id="shipPagination"></div>
+        </section>
+
+        <section id="storeLogicPickupSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('storeLogicToShipSection','store')">Logic</a>
+            <a onclick="showSection('storeInventorySection','store')">Inventory</a>
+            <a onclick="alert('Store → Finance not yet implemented.')">Finance</a>
+          </div>
+          <div class="store-subnav-logic">
+            <a onclick="showSection('storeLogicToShipSection','store')">To Ship</a>
+            <a onclick="showSection('storeLogicPickupSection','store')" class="active">Pickup</a>
+            <a onclick="showSection('storeLogicReturnsSection','store')">Returns</a>
+          </div>
+          <h2>Pickup Management</h2>
+          <div class="filter-row">
+            <div class="info-badge" id="pickupBadge">0 to pickup</div>
+            <button class="btn" onclick="alert('Filter for pickup (implement logic)')">Filter</button>
+          </div>
+          <table class="table" id="pickupTable">
+            <thead>
+              <tr><th>Customer Name / Email / (InvoiceID)</th><th>Date</th><th>Ops</th></tr>
+            </thead>
+            <tbody id="pickupBody"></tbody>
+          </table>
+          <div id="pickupEmptyMessage" style="text-align:center; color:#666;">No new pickup requested.</div>
+        </section>
+
+        <section id="storeLogicReturnsSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('storeLogicToShipSection','store')">Logic</a>
+            <a onclick="showSection('storeInventorySection','store')">Inventory</a>
+            <a onclick="alert('Store → Finance not yet implemented.')">Finance</a>
+          </div>
+          <div class="store-subnav-logic">
+            <a onclick="showSection('storeLogicToShipSection','store')">To Ship</a>
+            <a onclick="showSection('storeLogicPickupSection','store')">Pickup</a>
+            <a onclick="showSection('storeLogicReturnsSection','store')" class="active">Returns</a>
+          </div>
+          <h2>Returns Request</h2>
+          <div class="filter-row" style="align-items:center;">
+            <label style="margin-right:1rem;">Access Path</label>
+            <label><input type="radio" name="accessPath" checked> On-line Requests</label>
+            <label><input type="radio" name="accessPath"> In-person Request</label>
+          </div>
+          <table class="table" id="returnsTable">
+            <thead>
+              <tr><th>Customer Name / Email / (InvoiceID) | Status | RefundID</th><th>Date</th><th>Ops</th></tr>
+            </thead>
+            <tbody id="returnsBody"></tbody>
+          </table>
+          <div id="returnsEmptyMessage" style="text-align:center; color:#666;">No return request to handle.</div>
+        </section>
+
+        <!-- STORE -> INVENTORY -->
+        <section id="storeInventorySection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('storeLogicToShipSection','store')">Logic</a>
+            <a onclick="showSection('storeInventorySection','store')" class="active">Inventory</a>
+            <a onclick="alert('Store → Finance not yet implemented.')">Finance</a>
+          </div>
+          <div class="store-subnav-inventory">
+            <a onclick="showSection('storeInventoryItemMasterSection','store')">Item Mstr</a>
+            <a onclick="showSection('storeInventoryComposeSection','store')">Compose</a>
+            <a onclick="showSection('storeInventoryPkgItemSection','store')">Pkg-Item</a>
+            <a onclick="showSection('storeInventoryFilterSection','store')">Filter</a>
+          </div>
+          <h2>Inventory</h2>
+          <p>No. of Items = 2 (Example data)</p>
+          <table class="table">
+            <thead>
+              <tr><th>Item Name - (Category) (Qty)</th><th>Ops</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Artisan Gift Box Set - (Basket)</td>
+                <td><button class="btn-secondary">Open</button></td>
+              </tr>
+              <tr>
+                <td>Handcrafted Ceramic Vase - (Ceramics)</td>
+                <td><button class="btn-secondary">Open</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="storeInventoryItemMasterSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('storeLogicToShipSection','store')">Logic</a>
+            <a onclick="showSection('storeInventorySection','store')" class="active">Inventory</a>
+            <a onclick="alert('Store → Finance not yet implemented.')">Finance</a>
+          </div>
+          <div class="store-subnav-inventory">
+            <a onclick="showSection('storeInventoryItemMasterSection','store')" class="active">Item Master</a>
+            <a onclick="showSection('storeInventoryComposeSection','store')">Compose</a>
+            <a onclick="showSection('storeInventoryPkgItemSection','store')">Pkg-Item</a>
+            <a onclick="showSection('storeInventoryFilterSection','store')">Filter</a>
+          </div>
+          <h2>Manage Item Master</h2>
+          <div style="background:#eef2f5; padding:1rem; border-radius:6px;">
+            <div style="margin-bottom:0.5rem;">
+              <label><input type="radio" name="classification" checked> Assets</label>
+              <label><input type="radio" name="classification"> Catalog</label>
+              <label><input type="radio" name="classification"> Raw-Item</label>
+              <label>Item Type:</label>
+              <label><input type="radio" name="itemType" checked> Goods</label>
+              <label><input type="radio" name="itemType"> Services</label>
+              <label>Operation Type:</label>
+              <label><input type="radio" name="opType" checked> New</label>
+              <label><input type="radio" name="opType"> Edit</label>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+              <label style="display:block; font-weight:bold;">Item Name</label>
+              <input type="text" placeholder="Enter an item name ..." style="width:80%;">
+            </div>
+            <div style="margin-bottom:0.75rem;">
+              <label style="display:block; font-weight:bold;">Description</label>
+              <textarea style="width:80%;" rows="3" placeholder="Describe your item"></textarea>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+              <label style="display:block; font-weight:bold;">Unit Name</label>
+              <input type="text" placeholder="Unit Name" style="width:50%;">
+              <span style="font-size:0.85rem; color:#666;">* Check ( i ) for usage</span>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+              <label>Can sell in fraction</label>
+              <label><input type="radio" name="fraction" checked> No</label>
+              <label><input type="radio" name="fraction"> Yes</label>
+              <label><input type="checkbox"> Will have sub items</label>
+            </div>
+            <div style="margin-bottom:0.75rem;">
+              <button class="btn-secondary">Category</button>
+              <span style="color:red; font-size:0.85rem;">Category not specified (mandatory)</span>
+            </div>
+            <div>
+              <button class="btn">Save</button>
+              <button class="btn-secondary" onclick="history.back()">Back</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="storeInventoryComposeSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('storeLogicToShipSection','store')">Logic</a>
+            <a onclick="showSection('storeInventorySection','store')">Inventory</a>
+            <a onclick="alert('Store → Finance not yet implemented.')">Finance</a>
+          </div>
+          <div class="store-subnav-inventory">
+            <a onclick="showSection('storeInventoryItemMasterSection','store')">Item Master</a>
+            <a onclick="showSection('storeInventoryComposeSection','store')" class="active">Compose</a>
+            <a onclick="showSection('storeInventoryPkgItemSection','store')">Pkg-Item</a>
+            <a onclick="showSection('storeInventoryFilterSection','store')">Filter</a>
+          </div>
+          <h2>Composition Target</h2>
+          <div style="background:#dde2e6; padding:1rem; border-radius:6px; margin-bottom:1rem;">
+            <label>Item Name</label>
+            <input type="text" placeholder="Enter item name to filter">
+            <button class="btn-secondary">Fetch</button>
+            <p style="font-size:0.85rem; color:#666;">Part/full of item name.</p>
+          </div>
+          <div style="background:#cde4c0; padding:1rem; border-radius:6px; margin-bottom:1rem;">
+            <h3>Building Block Items</h3>
+            <label>Build Item</label>
+            <input type="text" placeholder="Enter item name to filter">
+            <button class="btn-secondary">Fetch</button>
+            <p style="font-size:0.85rem; color:#666;">Part/full of item name.</p>
+            <div style="margin-top:0.5rem;">
+              <label>Item Type:</label>
+              <label><input type="radio" name="buildItemType" checked> Raw</label>
+              <label><input type="radio" name="buildItemType"> Catalog</label>
+            </div>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>Ops</th><th>Qty</th><th>Unit</th><th>Item Name</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div>
+            <label>Name</label>
+            <input type="text" placeholder="Enter unique composition name" style="width:40%;">
+            <button class="btn-secondary">Draft</button>
+            <button class="btn-secondary">Open</button>
+          </div>
+          <div style="margin-top:1rem;">
+            <button class="btn-secondary">Note</button>
+            <button class="btn-secondary" onclick="history.back()">Back</button>
+            <button class="btn-icon" style="background-color:#b00; color:#fff;">🗑️</button>
+          </div>
+        </section>
+
+        <section id="storeInventoryPkgItemSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('storeLogicToShipSection','store')">Logic</a>
+            <a onclick="showSection('storeInventorySection','store')" class="active">Inventory</a>
+            <a onclick="alert('Store → Finance not yet implemented.')">Finance</a>
+          </div>
+          <div class="store-subnav-inventory">
+            <a onclick="showSection('storeInventoryItemMasterSection','store')">Item Master</a>
+            <a onclick="showSection('storeInventoryComposeSection','store')">Compose</a>
+            <a onclick="showSection('storeInventoryPkgItemSection','store')" class="active">Pkg-Item</a>
+            <a onclick="showSection('storeInventoryFilterSection','store')">Filter</a>
+          </div>
+          <h2>Variable Composition Item</h2>
+          <p>Classification : Catalog || Type: Goods || Unit: Package</p>
+          <label>Operation Type:</label>
+          <label><input type="radio" name="opType2" checked> New</label>
+          <label><input type="radio" name="opType2"> Edit</label>
+          <div style="margin:1rem 0;">
+            <div style="margin-bottom:0.5rem;">
+              <label>Item Name</label>
+              <input type="text" placeholder="Enter an item name ..." style="width:50%;">
+            </div>
+            <div style="margin-bottom:0.5rem;">
+              <label>Description</label>
+              <input type="text" placeholder="Describe your item" style="width:50%;">
+            </div>
+            <div style="margin-bottom:0.5rem;">
+              <label>Quantity</label>
+              <input type="number" value="1" style="width:80px;">
+              <button class="btn-secondary">Add</button>
+            </div>
+            <div style="margin-bottom:1rem;">
+              <button class="btn-secondary">Category</button>
+            </div>
+            <table class="table">
+              <thead>
+                <tr><th>Ops</th><th>Category</th><th>Ops</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div style="margin-top:0.5rem;">
+              <label>Monthly Shipping Cost $</label>
+              <input type="number" value="0" style="width:100px;">
+            </div>
+          </div>
+          <div>
+            <button class="btn">Save</button>
+          </div>
+        </section>
+
+        <section id="storeInventoryFilterSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('storeLogicToShipSection','store')">Logic</a>
+            <a onclick="showSection('storeInventorySection','store')" class="active">Inventory</a>
+            <a onclick="alert('Store → Finance not yet implemented.')">Finance</a>
+          </div>
+          <div class="store-subnav-inventory">
+            <a onclick="showSection('storeInventoryItemMasterSection','store')">Item Master</a>
+            <a onclick="showSection('storeInventoryComposeSection','store')">Compose</a>
+            <a onclick="showSection('storeInventoryPkgItemSection','store')">Pkg-Item</a>
+            <a onclick="showSection('storeInventoryFilterSection','store')" class="active">Filter</a>
+          </div>
+          <h2>Inventory Filter</h2>
+          <p>Filter your Inventory items here. Classification, item type, plus category or name. Then fetch results below.</p>
+          <div style="background:#f9f9f9; padding:1rem; border-radius:4px; border:1px solid #ddd;">
+            <label>Classification:</label>
+            <label><input type="radio" name="filterClass" checked> Assets</label>
+            <label><input type="radio" name="filterClass"> Catalog</label>
+            <label><input type="radio" name="filterClass"> Raw-Item</label>
+            <br><br>
+            <label>Item Type:</label>
+            <label><input type="radio" name="filterItemType" checked> Goods</label>
+            <label><input type="radio" name="filterItemType"> Services</label>
+            <br><br>
+            <label>Filter By:</label>
+            <label><input type="radio" name="invFilterBy" checked> All</label>
+            <label><input type="radio" name="invFilterBy"> By Name</label>
+            <label><input type="radio" name="invFilterBy"> By Category</label>
+            <br><br>
+            <button class="btn" onclick="alert('Inventory filter fetched (mock)!')">Fetch</button>
+          </div>
+        </section>
+
+        <!-- 4) CONNECT: News, Bmail, Campaign, Calendar -->
+        <section id="connectNewsSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('connectNewsSection','connect')" class="active">News</a>
+            <a onclick="showSection('connectBmailSection','connect')">Bmail</a>
+            <a onclick="showSection('connectCampaignSection','connect')">Campaign</a>
+            <a onclick="showSection('connectCalendarSection','connect')">Calendar</a>
+          </div>
+          <h2>Artisan Alley - Today</h2>
+          <div class="news-container">
+            <div class="news-main">
+              <h3>Welcome to Artisan Alley</h3>
+              <img src="https://via.placeholder.com/200?text=Artisan+Alley" alt="Artisan Alley">
+              <p>Hello, Artisans and Craft Enthusiasts!</p>
+              <p>We are thrilled to welcome you to Artisan Alley...</p>
+            </div>
+            <div class="news-aside">
+              <h4>Post List</h4>
+              <div class="post-list-item">
+                <span>Welcome to Artisan Alley</span>
+                <button class="btn-icon">0</button>
+              </div>
+              <div class="post-list-item">
+                <span>Hello, Artisans and Craft Enthusiasts...</span>
+                <button class="btn-icon">0</button>
+              </div>
+              <div class="post-list-item">
+                <span>Meet Our Artisans: Creativity Unleashed</span>
+                <button class="btn-icon">0</button>
+              </div>
+              <div style="text-align:right; margin-top:1rem;">
+                <button class="btn" onclick="alert('Open Editor (implement logic)')">Editor</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="connectBmailSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('connectNewsSection','connect')">News</a>
+            <a onclick="showSection('connectBmailSection','connect')" class="active">Bmail</a>
+            <a onclick="showSection('connectCampaignSection','connect')">Campaign</a>
+            <a onclick="showSection('connectCalendarSection','connect')">Calendar</a>
+          </div>
+          <h2>Conversations</h2>
+          <div style="margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+            <span>Total: 1 | 0 Unread</span>
+            <span style="color:#666;">Dot Colors: Unread | Replied | Ordered by Sent-Date</span>
+            <div style="margin-left:auto;">
+              <button class="btn" onclick="alert('Search Bmail')">Search</button>
+              <button class="btn" onclick="alert('New Bmail')">New</button>
+            </div>
+          </div>
+          <table class="bmail-table">
+            <thead>
+              <tr>
+                <th>Subject | Sent-date | Sent By | Message Type</th>
+                <th>Ops</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Invitation accepted by Gabrielle Mittelbach | 2024-07-14 | Gabrielle Mittelbach | Notification</td>
+                <td class="bmail-ops">
+                  <button class="btn" onclick="alert('Open message')">Open</button>
+                  <button class="btn" onclick="alert('Tag message')">Tag</button>
+                  <button class="btn" onclick="alert('Delete message')">🗑️</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="connectCampaignSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('connectNewsSection','connect')">News</a>
+            <a onclick="showSection('connectBmailSection','connect')">Bmail</a>
+            <a onclick="showSection('connectCampaignSection','connect')" class="active">Campaign</a>
+            <a onclick="showSection('connectCalendarSection','connect')">Calendar</a>
+          </div>
+          <h2>Email Broadcast Initiation</h2>
+          <div class="campaign-panel">
+            <div style="margin-bottom:1rem;">
+              <label style="margin-right:1rem;">Select an action:</label>
+              <label><input type="radio" name="campaignAction" checked> New</label>
+              <label><input type="radio" name="campaignAction"> Edit</label>
+            </div>
+            <div class="campaign-field">
+              <label>Campaign Name:</label>
+              <input type="text" placeholder="Enter unique broadcast name">
+            </div>
+            <div class="campaign-field">
+              <label>Description:</label>
+              <textarea placeholder="Description - internal." rows="2"></textarea>
+            </div>
+            <div class="campaign-field">
+              <label>Letter Subject:</label>
+              <input type="text" placeholder="Subject of the broadcast letter">
+            </div>
+            <div class="campaign-field">
+              <label>Contact Email:</label>
+              <input type="email" placeholder="State the email recipient may contact">
+            </div>
+            <div class="campaign-field">
+              <label>Presentation BG Color:</label>
+              <input type="text" value="#fff" style="max-width:100px;">
+              <button class="btn" onclick="alert('Open color picker')">Color Choice</button>
+            </div>
+            <div class="campaign-field">
+              <label>Select composition type:</label>
+              <select>
+                <option>Basic Template</option>
+                <option>Custom HTML</option>
+                <option>Text Only</option>
+              </select>
+            </div>
+            <div style="text-align:right;">
+              <button class="btn" onclick="alert('Clear form')">Clear</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="connectCalendarSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('connectNewsSection','connect')">News</a>
+            <a onclick="showSection('connectBmailSection','connect')">Bmail</a>
+            <a onclick="showSection('connectCampaignSection','connect')">Campaign</a>
+            <a onclick="showSection('connectCalendarSection','connect')" class="active">Calendar</a>
+          </div>
+          <div class="calendar-container">
+            <div class="calendar-header">
+              <button class="btn" onclick="alert('Previous month')">Prev</button>
+              <h3>(Community) Today: 02-01-2025<br>Calendar of February, 2025</h3>
+              <div>
+                <button class="btn" onclick="alert('Search events')">🔍</button>
+                <button class="btn" onclick="alert('Add new event')">Event</button>
+              </div>
+              <button class="btn" onclick="alert('Next month')">Next</button>
+            </div>
+            <div class="calendar-grid">
+              <div class="calendar-day gray">26</div>
+              <div class="calendar-day gray">27</div>
+              <div class="calendar-day gray">28</div>
+              <div class="calendar-day gray">29</div>
+              <div class="calendar-day gray">30</div>
+              <div class="calendar-day gray">31</div>
+              <div class="calendar-day">1</div>
+              <div class="calendar-day">2</div>
+              <div class="calendar-day">3</div>
+              <div class="calendar-day">4</div>
+              <div class="calendar-day">5</div>
+              <div class="calendar-day">6</div>
+              <div class="calendar-day">7</div>
+              <div class="calendar-day">8</div>
+              <div class="calendar-day">9</div>
+              <div class="calendar-day">10</div>
+              <div class="calendar-day">11</div>
+              <div class="calendar-day">12</div>
+              <div class="calendar-day">13</div>
+              <div class="calendar-day">14</div>
+              <div class="calendar-day">15</div>
+              <div class="calendar-day">16</div>
+              <div class="calendar-day">17</div>
+              <div class="calendar-day">18</div>
+              <div class="calendar-day">19</div>
+              <div class="calendar-day">20</div>
+              <div class="calendar-day">21</div>
+              <div class="calendar-day">22</div>
+              <div class="calendar-day">23</div>
+              <div class="calendar-day">24</div>
+              <div class="calendar-day">25</div>
+              <div class="calendar-day">26</div>
+              <div class="calendar-day">27</div>
+              <div class="calendar-day">28</div>
+              <div class="calendar-day">29</div>
+              <div class="calendar-day gray">2</div>
+              <div class="calendar-day gray">3</div>
+              <div class="calendar-day gray">4</div>
+              <div class="calendar-day gray">5</div>
+              <div class="calendar-day gray">6</div>
+              <div class="calendar-day gray">7</div>
+              <div class="calendar-day gray">8</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5) OPERATE: Reports, Tasks, Pay-Ctrl -->
+        <section id="operateReportsSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('operateReportsSection','operate')" class="active">Reports</a>
+            <a onclick="showSection('operateTasksSection','operate')">Tasks</a>
+            <a onclick="showSection('operatePayCtrlSection','operate')">Pay-Ctrl</a>
+          </div>
+          <h2>Reports</h2>
+          <table class="table">
+            <thead>
+              <tr><th>Operations</th><th>Report Names</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><button class="btn-secondary">Select</button></td><td>Community directory</td></tr>
+              <tr><td><button class="btn-secondary">Select</button></td><td>Community Account Summary</td></tr>
+              <tr><td><button class="btn-secondary">Select</button></td><td>Customer Information</td></tr>
+              <tr><td><button class="btn-secondary">Select</button></td><td>Invoices</td></tr>
+              <tr><td><button class="btn-secondary">Select</button></td><td>Inventory</td></tr>
+              <tr><td><button class="btn-secondary">Select</button></td><td>Payment History</td></tr>
+              <tr><td><button class="btn-secondary">Select</button></td><td>Expense Reports</td></tr>
+              <tr><td><button class="btn-secondary">Select</button></td><td>General Ledger</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="operateTasksSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('operateReportsSection','operate')">Reports</a>
+            <a onclick="showSection('operateTasksSection','operate')" class="active">Tasks</a>
+            <a onclick="showSection('operatePayCtrlSection','operate')">Pay-Ctrl</a>
+          </div>
+          <h2>Tasks</h2>
+          <div style="margin-bottom:0.5rem;">
+            <label>Task Status:</label>
+            <label><input type="radio" name="taskStatus" checked> New</label>
+            <label><input type="radio" name="taskStatus"> Work In progress</label>
+            <label><input type="radio" name="taskStatus"> Done</label>
+            <label><input type="radio" name="taskStatus"> Canceled</label>
+          </div>
+          <table class="table">
+            <thead>
+              <tr><th>id | Item Name | Initiated On | Task Name | Status | Customer</th><th>Ops</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>11 | Custom Pottery Design Service | 2024-07-14 | New Service Initiation | new | Gabrielle Mittelbach</td>
+                <td><button class="btn-secondary">Open</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="operatePayCtrlSection" class="hidden">
+          <div class="subnav">
+            <a onclick="showSection('operateReportsSection','operate')">Reports</a>
+            <a onclick="showSection('operateTasksSection','operate')">Tasks</a>
+            <a onclick="showSection('operatePayCtrlSection','operate')" class="active">Pay-Ctrl</a>
+          </div>
+          <h2>Payment Controller</h2>
+          <div style="margin-bottom:0.5rem; font-weight:500;">Active Total $0.00</div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Item Description</th>
+                <th>Customer Req: (★ New | ✔ Replied)</th>
+                <th>Ops</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Artisan Alley Monthly Membership Box purchased via subscription is of type membership $50.00 | Status: error</td>
+                <td>Gabrielle Mittelbach (g.mittelbach@baanda.com) (InvId: 473) *Error</td>
+                <td><button class="btn-secondary">Open</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- 6) ADMIN -->
+        <section id="adminSection" class="hidden">
+          <h2>Admin Tasks</h2>
+          <div class="admin-task-list" id="adminTaskList"></div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ALL SECTION IDs */
+    const allSections = [
+      "landingSection",
+      "catalogManageSection","catalogSellSection","catalogCartMgmtSection",
+      "storeLogicToShipSection","storeLogicPickupSection","storeLogicReturnsSection",
+      "storeInventorySection","storeInventoryItemMasterSection","storeInventoryComposeSection",
+      "storeInventoryPkgItemSection","storeInventoryFilterSection",
+      "connectNewsSection","connectBmailSection","connectCampaignSection","connectCalendarSection",
+      "operateReportsSection","operateTasksSection","operatePayCtrlSection",
+      "adminSection"
+    ];
+
+    function showSection(sectionId) {
+      /* Hide all sections */
+      allSections.forEach(sec => {
+        document.getElementById(sec).classList.add("hidden");
+      });
+      /* Show desired section */
+      document.getElementById(sectionId).classList.remove("hidden");
+
+      /* Update sidebar highlight */
+      document.querySelectorAll(".sidebar-nav a").forEach(a => a.classList.remove("active"));
+      const linkMap = {
+        landingSection: "side-landing",
+        catalogManageSection: "side-catalog", catalogSellSection: "side-catalog", catalogCartMgmtSection: "side-catalog",
+        storeLogicToShipSection: "side-store", storeLogicPickupSection: "side-store", storeLogicReturnsSection: "side-store",
+        storeInventorySection: "side-store", storeInventoryItemMasterSection: "side-store",
+        storeInventoryComposeSection: "side-store", storeInventoryPkgItemSection: "side-store", storeInventoryFilterSection: "side-store",
+        connectNewsSection: "side-connect", connectBmailSection: "side-connect", connectCampaignSection: "side-connect", connectCalendarSection: "side-connect",
+        operateReportsSection: "side-operate", operateTasksSection: "side-operate", operatePayCtrlSection: "side-operate",
+        adminSection: "side-admin"
+      }[sectionId];
+      if (linkMap) {
+        const el = document.getElementById(linkMap);
+        if (el) el.classList.add("active");
+      }
+    }
+    showSection("landingSection");
+
+    /* COLLAPSE SIDEBAR */
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      const header = document.getElementById("sidebarHeader");
+      sidebar.classList.toggle("collapsed");
+      header.classList.toggle("collapsed");
+      document.querySelectorAll(".nav-text").forEach(nt => {
+        nt.style.opacity = sidebar.classList.contains("collapsed") ? "0" : "1";
+      });
+    }
+
+    /* CATALOG -> MANAGE LOGIC */
+    const selectByRadios = document.querySelectorAll('input[name="selectBy"]');
+    const searchRow = document.getElementById('searchRow');
+    const searchInput = document.getElementById('searchInput');
+    selectByRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'name' || radio.value === 'category') {
+          searchRow.style.display = 'flex';
+        } else {
+          searchRow.style.display = 'none';
+          searchInput.value = '';
+        }
+      });
+    });
+
+    const fetchBtn = document.getElementById('fetchBtn');
+    const resultsTable = document.getElementById('resultsTable');
+    const resultsBody = document.getElementById('resultsBody');
+    if (fetchBtn) {
+      fetchBtn.addEventListener('click', () => {
+        resultsBody.innerHTML = '';
+        resultsTable.style.display = 'table';
+        const demoItems = [
+          { name: 'Organic Apples', category: 'Produce', type: 'Goods', status: 'Published' },
+          { name: 'Yoga Class', category: 'Health', type: 'Service', status: 'Published' }
+        ];
+        demoItems.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.category}</td>
+            <td>${item.type}</td>
+            <td>${item.status}</td>
+          `;
+          resultsBody.appendChild(row);
+        });
+      });
+    }
+
+    /* CATALOG -> SELL ITEMS */
+    const items = [
+      { id:117, name:'Artisan Alley Monthly Membership Box', description:'Introducing...', imgUrl:'https://via.placeholder.com/60?text=Box' },
+      { id:114, name:'Artisan Gift Box Set', description:'Delight someone special...', imgUrl:'https://via.placeholder.com/60?text=Gift' },
+      { id:116, name:'Custom Pottery Design Service', description:'A bespoke service...', imgUrl:'https://via.placeholder.com/60?text=Pottery' },
+      { id:113, name:'Handcrafted Ceramic Vase', description:'Enhance your home...', imgUrl:'https://via.placeholder.com/60?text=Vase' },
+      { id:115, name:"Weekly Artisans' Workshop", description:'Join us every Saturday...', imgUrl:'https://via.placeholder.com/60?text=Workshop' }
+    ];
+    const itemList = document.getElementById('itemList');
+    const footerNote = document.getElementById('footerNote');
+    if (itemList && items.length > 0) {
+      items.forEach(item => {
+        const row = document.createElement('div');
+        row.classList.add('item-row');
+        const imgDiv = document.createElement('div');
+        imgDiv.classList.add('item-img');
+        imgDiv.style.backgroundImage = `url(${item.imgUrl})`;
+        const detailsDiv = document.createElement('div');
+        detailsDiv.innerHTML = `
+          <div style="font-weight:bold; margin-bottom:0.25rem;">${item.name} -- ${item.id}</div>
+          <div style="font-size:0.9rem; color:#666;">${item.description}</div>
+        `;
+        const opsDiv = document.createElement('div');
+        const openBtn = document.createElement('button');
+        openBtn.classList.add('btn-secondary');
+        openBtn.textContent = 'Open';
+        openBtn.addEventListener('click', () => alert('Opening item ' + item.id + '...'));
+        opsDiv.appendChild(openBtn);
+        row.appendChild(imgDiv);
+        row.appendChild(detailsDiv);
+        row.appendChild(opsDiv);
+        itemList.appendChild(row);
+      });
+      footerNote.textContent = `Listed ${items.length} record(s) of ${items.length} available. [max items: 40]`;
+    }
+
+    /* CATALOG -> CART MGMT */
+    const cartBody = document.getElementById('cartBody');
+    const cartItems = [
+      { type:'buyer', cartOf:'Gabrielle Mittelbach', lastTouched:'2024-11-30 01:53 PM' },
+      { type:'seller', cartOf:'Gabrielle Mittelbach', lastTouched:'2024-12-21 05:24 PM' }
+    ];
+    if (cartBody) {
+      cartItems.forEach(cart => {
+        const tr = document.createElement('tr');
+        const opsTd = document.createElement('td');
+        opsTd.classList.add('cart-ops');
+        const delBtn = document.createElement('button');
+        delBtn.classList.add('cart-btn','btn-icon');
+        delBtn.innerHTML = '🗑️';
+        delBtn.title = 'Remove Cart';
+        delBtn.addEventListener('click', () => {
+          if (confirm(`Remove the ${cart.type} cart of ${cart.cartOf}?`)) {
+            tr.remove();
+          }
+        });
+        const moreBtn = document.createElement('button');
+        moreBtn.classList.add('cart-btn','cart-btn-ops','btn-icon');
+        moreBtn.textContent = '...';
+        moreBtn.addEventListener('click', () => {
+          alert(`More options for ${cart.cartOf} - ${cart.type} cart`);
+        });
+        opsTd.appendChild(delBtn);
+        opsTd.appendChild(moreBtn);
+        tr.innerHTML += `
+          <td>${cart.type}</td>
+          <td>${cart.cartOf}</td>
+          <td>${cart.lastTouched}</td>
+        `;
+        tr.insertBefore(opsTd, tr.firstChild);
+        cartBody.appendChild(tr);
+      });
+    }
+
+    /* STORE -> TO SHIP */
+    const ordersToShip = [
+      { name:'Jon Carlo Vargas -- jc@baanda.com (550)', date:'2024-09-04' },
+      { name:'Gabrielle Mittelbach -- ogehouse@gmail.com (548)', date:'2024-09-04' },
+      { name:'Jon Carlo Vargas -- jc@baanda.com (547)', date:'2024-09-04' },
+      { name:'jon carlo -- jc@baanda.com (526)', date:'2024-08-31' }
+    ];
+    const shipBody = document.getElementById('shipBody');
+    const shipPagination = document.getElementById('shipPagination');
+    let currentShipPage = 1;
+    const shipPerPage = 10;
+    function renderShipOrders() {
+      shipBody.innerHTML = '';
+      const start = (currentShipPage - 1) * shipPerPage;
+      const end = start + shipPerPage;
+      const pageOrders = ordersToShip.slice(start, end);
+      pageOrders.forEach(ord => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${ord.name}</td>
+          <td>${ord.date}</td>
+          <td class="order-ops"><button class="btn-secondary">Open</button></td>
+        `;
+        shipBody.appendChild(tr);
+      });
+    }
+    function renderShipPagination() {
+      shipPagination.innerHTML = '';
+      const pageCount = Math.ceil(ordersToShip.length / shipPerPage);
+      for (let i = 1; i <= pageCount; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.classList.add('btn-secondary','btn-icon');
+        if (i === currentShipPage) {
+          btn.style.backgroundColor = '#bbb';
+        }
+        btn.addEventListener('click', () => {
+          currentShipPage = i;
+          renderShipOrders();
+          renderShipPagination();
+        });
+        shipPagination.appendChild(btn);
+      }
+    }
+    renderShipOrders();
+    renderShipPagination();
+
+    /* STORE -> PICKUP */
+    const pickupBody = document.getElementById('pickupBody');
+    const pickupBadge = document.getElementById('pickupBadge');
+    const pickupEmptyMessage = document.getElementById('pickupEmptyMessage');
+    const pickupOrders = [
+      { name:'Jane Doe -- jane@example.com (660)', date:'2024-09-05' },
+      { name:'Michael Smith -- msmith@example.com (661)', date:'2024-09-05' }
+    ];
+    function renderPickupOrders() {
+      if (!pickupOrders.length) {
+        pickupBadge.textContent = '0 to pickup';
+        pickupEmptyMessage.style.display = 'block';
+        document.getElementById('pickupTable').style.display = 'none';
+      } else {
+        pickupBadge.textContent = `${pickupOrders.length} to pickup`;
+        pickupEmptyMessage.style.display = 'none';
+        document.getElementById('pickupTable').style.display = 'table';
+        pickupBody.innerHTML = '';
+        pickupOrders.forEach(order => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${order.name}</td>
+            <td>${order.date}</td>
+            <td class="order-ops"><button class="btn-secondary">Open</button></td>
+          `;
+          pickupBody.appendChild(tr);
+        });
+      }
+    }
+    renderPickupOrders();
+
+    /* STORE -> RETURNS */
+    const returnsTable = document.getElementById('returnsTable');
+    const returnsBody = document.getElementById('returnsBody');
+    const returnsEmptyMessage = document.getElementById('returnsEmptyMessage');
+    const returnRequests = [];
+    function renderReturnRequests() {
+      if (!returnRequests.length) {
+        returnsEmptyMessage.style.display = 'block';
+        returnsTable.style.display = 'none';
+      } else {
+        returnsEmptyMessage.style.display = 'none';
+        returnsTable.style.display = 'table';
+        returnsBody.innerHTML = '';
+        returnRequests.forEach(req => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${req.name}</td>
+            <td>${req.date}</td>
+            <td class="order-ops"><button class="btn-secondary">Open</button></td>
+          `;
+          returnsBody.appendChild(tr);
+        });
+      }
+    }
+    renderReturnRequests();
+
+    /* ADMIN -> TASK LIST */
+    const adminTaskList = document.getElementById('adminTaskList');
+    if (adminTaskList) {
+      const adminTasks = [
+        "Set Date for the Financial Year (One Time)",
+        "Initiate Membership Subscription/Rent (One Time)",
+        "CreditCard Payment Setup (One Time)",
+        "Templates (invite/reminder letter, invoice)",
+        "Invite New Members",
+        "School Setup and Activate (soon)",
+        "Role Assignments (on-going)",
+        "Create & Manage Groups",
+        "Pickup Addresses, Bank Info, & Invoice Terms",
+        "Shipping From-Addresses & Prices Setup",
+        "Initial Financial State Setup",
+        "Record an investment or a Loan (soon)",
+        "Return Policy Setup",
+        "Define company's crypto wallet address (soon)",
+        "Setup default shipping package size",
+        "Branding & promotion image mgmt.",
+        "Configure Email campaign footer",
+        "Configure Store Wide Sale Coupon",
+        "Open For Business - Cut the ribbon",
+        "Co-op store agreement question setup.",
+        "Co-op agreement authoring.",
+        "Initiate a new store.",
+        "Store approval and other store mgmt."
+      ];
+      adminTasks.forEach(task => {
+        const div = document.createElement('div');
+        div.textContent = task;
+        div.addEventListener('click', () => {
+          alert("Selected Admin Task: " + task + "\n(Implement your logic here.)");
+        });
+        adminTaskList.appendChild(div);
+      });
+    }
+  </script>
+</body>
+</html>
